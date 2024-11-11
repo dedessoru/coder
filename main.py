@@ -26,9 +26,15 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     filemode='a'
 )
+"""
+        logging.fatal("Configuration file 'config.json' not found.")
+        logging.debug("")
 
+"""
 # Логирование старта программы
-logging.info("Program started")
+logging.info("-----------------------------------------")
+logging.info("------------------Start------------------")
+logging.info("-----------------------------------------")
 
 # Ввод и вывод ASCII-логотипа
 logo = pyfiglet.figlet_format("coder")
@@ -79,149 +85,228 @@ def write_text_to_file(data):
         file.write(data)
     console.print(f"The result has been successfully saved to the file '{output_file}'.", style="bold green")
 
-# Функция для шифрования XOR
+# Функция шифрования XOR
 def xor_encrypt_to_binary(text, key):
-    logging.debug(f"XOR: User's Text={text}, Shift={key}")
+    logging.debug(f"XOR: User's Text={text}, Key={key}")
     encrypted_text = ""
-    for i in range(len(text)):
-        encrypted_char = ord(text[i]) ^ ord(key[i % len(key)])
-        encrypted_text += format(encrypted_char, '08b')
-    logging.debug(f"XOR Encrypted: Text={encrypted_text}")
+    text_bytes = text.encode('utf-8')
+    key_bytes = key.encode('utf-8')
+    
+    for i in range(len(text_bytes)):
+        encrypted_byte = text_bytes[i] ^ key_bytes[i % len(key_bytes)]
+        encrypted_text += format(encrypted_byte, '08b')
+    
+    logging.debug(f"XOR Encrypted Text={encrypted_text}")
     return encrypted_text
 
 def xor_decrypt_from_binary(binary_string, key):
-    logging.debug(f"XOR Encrypted: Text={binary_string}, Key = {key}")
-    decrypted_text = ""
-    for i in range(0, len(binary_string), 8):
-        encrypted_char = int(binary_string[i:i+8], 2)
-        decrypted_char = encrypted_char ^ ord(key[i // 8 % len(key)])
-        decrypted_text += chr(decrypted_char)
-    logging.info(f"Caesar: Encoded text: {decrypted_text}")    
-    return decrypted_text
+    logging.debug(f"XOR Encrypted Binary: Text={binary_string}, Key={key}")
+    key_bytes = key.encode('utf-8')
+    decrypted_bytes = bytearray()
+    
+    # Проверяем, что входной текст содержит только 0 и 1
+    binary_string = ''.join(c for c in binary_string if c in '01')
+    
+    try:
+        for i in range(0, len(binary_string), 8):
+            byte_str = binary_string[i:i+8]
+            if len(byte_str) == 8:  # Проверяем полный байт
+                encrypted_byte = int(byte_str, 2)
+                decrypted_byte = encrypted_byte ^ key_bytes[i // 8 % len(key_bytes)]
+                decrypted_bytes.append(decrypted_byte)
+        
+        decrypted_text = decrypted_bytes.decode('utf-8')
+        logging.debug(f"XOR Decrypted Text: {decrypted_text}")
+        return decrypted_text
+    except Exception as e:
+        logging.error(f"XOR decryption error: {str(e)}")
+        return None
 
-# Функция шифра Цезаря
+# Caesar Шифрование
 def caesar_cipher(text, shift):
     logging.debug(f"Caesar: User's Text={text}, Shift={shift}")
     new_text = ""
+    
     for char in text:
-        if 'A' <= char <= 'Z' or 'a' <= char <= 'z':
-            ascii_offset = 65 if char.isupper() else 97
-            new_text += chr((ord(char) - ascii_offset + shift) % 26 + ascii_offset)
-        elif 'А' <= char <= 'Я' or 'а' <= char <= 'я':
-            ascii_offset = 1040 if char.isupper() else 1072
-            new_text += chr((ord(char) - ascii_offset + shift) % 32 + ascii_offset)
+        if 'A' <= char <= 'Z':
+            new_text += chr((ord(char) - ord('A') + shift) % 26 + ord('A'))
+        elif 'a' <= char <= 'z':
+            new_text += chr((ord(char) - ord('a') + shift) % 26 + ord('a'))
+        elif char == 'Ё':
+            new_text += chr((ord('Е') - ord('А') + shift) % 32 + ord('А'))
+        elif char == 'ё':
+            new_text += chr((ord('е') - ord('а') + shift) % 32 + ord('а'))
+        elif 'А' <= char <= 'Я':
+            new_text += chr((ord(char) - ord('А') + shift) % 32 + ord('А'))
+        elif 'а' <= char <= 'я':
+            new_text += chr((ord(char) - ord('а') + shift) % 32 + ord('а'))
         else:
             new_text += char
-    logging.info(f"Caesar: Encoded text: {new_text}")
+
+    logging.debug(f"Caesar Encoded Text: {new_text}")
     return new_text
 
+
 def caesar_decipher(text, shift):
-    logging.debug(f"Caesar: Encoded text: {caesar_cipher(text, -shift)}")
+    logging.debug(f"Caesar Deciphering with Shift: {-shift}")
     return caesar_cipher(text, -shift)
 
 
-# Функция шифра Виженера
+# Vigenère Шифрование и расшифровка
 def vigenere_cipher(text, keyword):
     logging.debug(f"Vigenère: User's Text={text}, Keyword={keyword}")
-    extended_keyword = (keyword * (len(text) // len(keyword) + 1))[:len(text)]
-    encoded_text = ""
-    for i in range(len(text)):
-        text_char = text[i]
-        keyword_char = extended_keyword[i]
-        if 'A' <= text_char <= 'Z':
-            encoded_char = chr((ord(text_char) - ord('A') + ord(keyword_char) - ord('A')) % 26 + ord('A'))
-        elif 'a' <= text_char <= 'z':
-            encoded_char = chr((ord(text_char) - ord('a') + ord(keyword_char) - ord('a')) % 26 + ord('a'))
+    keyword = keyword.upper()
+    result = ""
+    keyword_index = 0
+    
+    for char in text:
+        if keyword_index >= len(keyword):
+            keyword_index = 0
+        key_char = keyword[keyword_index]
+        
+        if 'A' <= char <= 'Z':
+            shift = ord(key_char) - ord('A')
+            result += chr((ord(char) - ord('A') + shift) % 26 + ord('A'))
+            keyword_index += 1
+        elif 'a' <= char <= 'z':
+            shift = ord(key_char) - ord('A')
+            result += chr((ord(char) - ord('a') + shift) % 26 + ord('a'))
+            keyword_index += 1
+        elif char == 'Ё':
+            shift = (ord(key_char) - ord('A')) % 32
+            result += chr((ord('Е') - ord('А') + shift) % 32 + ord('А'))
+            keyword_index += 1
+        elif char == 'ё':
+            shift = (ord(key_char) - ord('A')) % 32
+            result += chr((ord('е') - ord('а') + shift) % 32 + ord('а'))
+            keyword_index += 1
+        elif 'А' <= char <= 'Я':
+            shift = (ord(key_char) - ord('A')) % 32
+            result += chr((ord(char) - ord('А') + shift) % 32 + ord('А'))
+            keyword_index += 1
+        elif 'а' <= char <= 'я':
+            shift = (ord(key_char) - ord('A')) % 32
+            result += chr((ord(char) - ord('а') + shift) % 32 + ord('а'))
+            keyword_index += 1
         else:
-            encoded_char = text_char
-        encoded_text += encoded_char
-    logging.info(f"Vigenère: Encoded text: {encoded_text}")
-    return encoded_text
+            result += char
+    
+    logging.debug(f"Vigenère Encoded Text: {result}")
+    return result
 
 def vigenere_decipher(text, keyword):
-    logging.debug(f"Vigenère: Text={text}, Keyword={keyword}")
-    extended_keyword = (keyword * (len(text) // len(keyword) + 1))[:len(text)]
-    decoded_text = ""
-    for i in range(len(text)):
-        text_char = text[i]
-        keyword_char = extended_keyword[i]
-        if 'A' <= text_char <= 'Z':
-            decoded_char = chr((ord(text_char) - ord(keyword_char) + 26) % 26 + ord('A'))
-        elif 'a' <= text_char <= 'z':
-            decoded_char = chr((ord(text_char) - ord(keyword_char) + 26) % 26 + ord('a'))
+    logging.debug(f"Vigenère Deciphering with Keyword: {keyword}")
+    keyword = keyword.upper()
+    result = ""
+    keyword_index = 0
+    
+    for char in text:
+        if keyword_index >= len(keyword):
+            keyword_index = 0
+        key_char = keyword[keyword_index]
+        
+        if 'A' <= char <= 'Z':
+            shift = ord(key_char) - ord('A')
+            result += chr((ord(char) - ord('A') - shift + 26) % 26 + ord('A'))
+            keyword_index += 1
+        elif 'a' <= char <= 'z':
+            shift = ord(key_char) - ord('A')
+            result += chr((ord(char) - ord('a') - shift + 26) % 26 + ord('a'))
+            keyword_index += 1
+        elif char == 'Ё':
+            shift = (ord(key_char) - ord('A')) % 32
+            result += chr((ord('Е') - ord('А') - shift + 32) % 32 + ord('А'))
+            keyword_index += 1
+        elif char == 'ё':
+            shift = (ord(key_char) - ord('A')) % 32
+            result += chr((ord('е') - ord('а') - shift + 32) % 32 + ord('а'))
+            keyword_index += 1
+        elif 'А' <= char <= 'Я':
+            shift = (ord(key_char) - ord('A')) % 32
+            result += chr((ord(char) - ord('А') - shift + 32) % 32 + ord('А'))
+            keyword_index += 1
+        elif 'а' <= char <= 'я':
+            shift = (ord(key_char) - ord('A')) % 32
+            result += chr((ord(char) - ord('а') - shift + 32) % 32 + ord('а'))
+            keyword_index += 1
         else:
-            decoded_char = text_char
-        decoded_text += decoded_char
-    logging.info(f"Vigenère Decryption: Decoded text: {decoded_text}")
-    return decoded_text
+            result += char
+    
+    logging.debug(f"Vigenère Decoded Text: {result}")
+    return result
 
-# Основной цикл программы
+# Основний цикл 
 while True:
-    console.print("[bold]Welcome to the Coder APP. Choose an option:[/bold]")
+    console.print(
+        "[bold]Welcome to the Coder APP, enter values from 1-3 to see my results[/bold]"
+    )
     console.print("1. XOR")
     console.print("2. Caesar")
     console.print("3. Vigenère")
-    console.print("4. Exit")
+    console.print("4.Exit")
     
     choice = console.input("Choose an option: ")
-    logging.info(f"User choice: {choice}")
+
     if choice == "1":
-        enordecrypt = asking_parametr("Enter 1 to Encrypt or 2 to Decrypt: ", "Please enter 1 or 2.", 1, 2)
+        enordecrypt = asking_parametr("Enter 1 to Encrypt 2 to Decrypt: ","ALERT! \nYou must enter either 1 or 2!",1,2)
         logging.info("User selected XOR method")
         text = read_text_from_file()
 
         if text:
-            key = input("Enter the secret key: ")
+            key = input("Enter the secret key (do not share it): ")
             if enordecrypt == 1:
                 encrypted_text = xor_encrypt_to_binary(text, key)
                 write_text_to_file(encrypted_text)
             elif enordecrypt == 2:
-                decrypted_text = xor_decrypt_from_binary(text, key)
+                decrypted_text = xor_decrypt_from_binary(encrypted_text,key)
                 write_text_to_file(decrypted_text)
+        
 
     elif choice == "2":
         logging.info("User selected Caesar method")
-        enordecrypt = asking_parametr("Enter 1 to Encrypt or 2 to Decrypt: ", "Please enter 1 or 2.", 1, 2)
+        enordecrypt = asking_parametr("Enter 1 to Encrypt 2 to Decrypt: ","ALERT! \nYou must enter either 1 or 2!",1,2)
         text = read_text_from_file()
-
+           
         if text:
             try:
-                shift = int(input("Enter shift value: "))
+                shift = int(input("Enter value of shift: "))
             except ValueError:
-                logging.error("Invalid shift value")
-                console.print("Shift must be a number.")
+                logging.error("The shift value is not a number.")
+                console.print("You must enter a number for the shift.")
                 continue
-
             if enordecrypt == 1:
                 encrypted_text = caesar_cipher(text, shift)
                 write_text_to_file(encrypted_text)
             elif enordecrypt == 2:
                 decrypted_text = caesar_decipher(text, shift)
                 write_text_to_file(decrypted_text)
+            
 
     elif choice == "3":
         logging.info("User selected Vigenère method")
-        enordecrypt = asking_parametr("Enter 1 to Encrypt or 2 to Decrypt: ", "Please enter 1 or 2.", 1, 2)
+        enordecrypt = asking_parametr("Enter 1 to Encrypt 2 to Decrypt: ","ALERT! \nYou must enter either 1 or 2!",1,2)
         text = read_text_from_file()
-
+            
         if text:
-            keyword = input("Enter the keyword: ")
+            keyword = input("Enter the keyword (letters only): ")
             if not keyword.isalpha():
-                logging.error("Keyword contains non-letter characters.")
+                logging.error("The keyword contains non-letter characters.")
                 console.print("The keyword must contain only letters.")
                 continue
-
-            if enordecrypt == 1:
-                encrypted_text = vigenere_cipher(text, keyword)
-                write_text_to_file(encrypted_text)
-            elif enordecrypt == 2:
-                decrypted_text = vigenere_decipher(text, keyword)
-                write_text_to_file(decrypted_text)
-
+            else:
+                if enordecrypt == 1:
+                    encoded_message = vigenere_cipher(text, keyword)
+                    write_text_to_file(encoded_message)
+                elif enordecrypt == 2:
+                    decrypted_text = vigenere_decipher(text, keyword)
+                    write_text_to_file(decrypted_text)
+                   
     elif choice == "4":
         logging.info("User exited the program")
         console.print("Stopping...")
         break
 
-# Логирование завершения программы
-logging.info("Program ended")
+# Логування завершення програми
+logging.info("-----------------------------------------")
+logging.info("-------------------END-------------------")
+logging.info("-----------------------------------------")
