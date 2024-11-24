@@ -4,8 +4,10 @@ import pyfiglet
 from rich.console import Console
 import os
 import sys
+import string
 
-# Функция для загрузки конфигурации из JSON файла
+
+# Функція для завантаження конфігурації з файлу JSON
 def load_config():
     try:
         with open('config.json', 'r') as file:
@@ -16,7 +18,7 @@ def load_config():
 
 config = load_config()
 
-# Настройки логирования на основе конфигурационного файла
+# Налаштування логування на основі файлу конфігурації
 log_file = config.get("log_file", "main.log")
 log_level = config.get("log_level", "DEBUG").upper()
 
@@ -26,24 +28,20 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     filemode='a'
 )
-"""
-        logging.fatal("Configuration file 'config.json' not found.")
-        logging.debug("")
 
-"""
-# Логирование старта программы
+# Логування старту програми
 logging.info("-----------------------------------------")
 logging.info("------------------Start------------------")
 logging.info("-----------------------------------------")
 
-# Ввод и вывод ASCII-логотипа
+# Введення та виведення ASCII-логотипу
 logo = pyfiglet.figlet_format("coder")
 print(logo)
 
 console = Console()
 console.print("Welcome to the coder universal app ")
 
-# Функция для безопасного запроса параметра
+# Функція безпечного запиту параметра
 def asking_parametr(text, errtext, minval=float('-inf'),  maxval=float('inf')):
     while True:
         try:
@@ -53,10 +51,10 @@ def asking_parametr(text, errtext, minval=float('-inf'),  maxval=float('inf')):
             else:
                 return choice
         except ValueError:
-            logging.error(errtext)
+            logging.fatal(f"{errtext}")
             console.print(errtext)
 
-# Функция для чтения текста из файла
+# Функція для читання тексту з файлу
 def read_text_from_file():
     input_file = input("Enter the path to the file containing the text for encryption/decryption: ")
     try:
@@ -67,7 +65,7 @@ def read_text_from_file():
         console.print(f"The file '{input_file}' was not found.", style="bold red")
         return None
 
-# Функция для записи текста в файл
+# Функція для запису тексту у файл
 def write_text_to_file(data):
     output_file = input("Enter the path to the file for saving the result: ")
     if os.path.exists(output_file):
@@ -75,17 +73,12 @@ def write_text_to_file(data):
         if overwrite != 'y':
             console.print("Writing canceled by the user.", style="bold yellow")
             return
-    else:
-        create_new = input(f"The file '{output_file}' was not found. Create a new file? (y/n): ").lower()
-        if create_new != 'y':
-            console.print("Writing canceled by the user.", style="bold yellow")
-            return
 
     with open(output_file, 'w') as file:
         file.write(data)
     console.print(f"The result has been successfully saved to the file '{output_file}'.", style="bold green")
 
-# Функция шифрования XOR
+# Функція шифрування XOR
 def xor_encrypt_to_binary(text, key):
     logging.debug(f"XOR: User's Text={text}, Key={key}")
     encrypted_text = ""
@@ -104,13 +97,13 @@ def xor_decrypt_from_binary(binary_string, key):
     key_bytes = key.encode('utf-8')
     decrypted_bytes = bytearray()
     
-    # Проверяем, что входной текст содержит только 0 и 1
+    # Перевіряємо, що вхідний текст містить лише 0 та 1
     binary_string = ''.join(c for c in binary_string if c in '01')
     
     try:
         for i in range(0, len(binary_string), 8):
             byte_str = binary_string[i:i+8]
-            if len(byte_str) == 8:  # Проверяем полный байт
+            if len(byte_str) == 8:  # Перевіряємо повний байт
                 encrypted_byte = int(byte_str, 2)
                 decrypted_byte = encrypted_byte ^ key_bytes[i // 8 % len(key_bytes)]
                 decrypted_bytes.append(decrypted_byte)
@@ -122,37 +115,101 @@ def xor_decrypt_from_binary(binary_string, key):
         logging.error(f"XOR decryption error: {str(e)}")
         return None
 
-# Caesar Шифрование
 def caesar_cipher(text, shift):
-    logging.debug(f"Caesar: User's Text={text}, Shift={shift}")
     new_text = ""
-    
+
     for char in text:
-        if 'A' <= char <= 'Z':
-            new_text += chr((ord(char) - ord('A') + shift) % 26 + ord('A'))
-        elif 'a' <= char <= 'z':
-            new_text += chr((ord(char) - ord('a') + shift) % 26 + ord('a'))
-        elif char == 'Ё':
-            new_text += chr((ord('Е') - ord('А') + shift) % 32 + ord('А'))
-        elif char == 'ё':
-            new_text += chr((ord('е') - ord('а') + shift) % 32 + ord('а'))
-        elif 'А' <= char <= 'Я':
-            new_text += chr((ord(char) - ord('А') + shift) % 32 + ord('А'))
-        elif 'а' <= char <= 'я':
-            new_text += chr((ord(char) - ord('а') + shift) % 32 + ord('а'))
+        if 'A' <= char <= 'Z' or char == ' ':
+            # Латиниця (великі літери + пробіл)
+            base = ord('A')
+            size = 26 + 1  # 26 літер + пробіл
+            if char == ' ':
+                offset = 26  # Пробіл йде після останньої літери
+            else:
+                offset = ord(char) - base
+            new_text += chr((offset + shift) % size + base) if (offset + shift) % size < 26 else ' '
+        elif 'a' <= char <= 'z' or char == ' ':
+            # Латиниця (малі літери + пробіл)
+            base = ord('a')
+            size = 26 + 1
+            if char == ' ':
+                offset = 26
+            else:
+                offset = ord(char) - base
+            new_text += chr((offset + shift) % size + base) if (offset + shift) % size < 26 else ' '
+        elif 'А' <= char <= 'Я' or char == ' ':
+            # Кирилиця (великі літери + пробіл)
+            base = ord('А')
+            size = 32 + 1  # 32 літери + пробіл
+            if char == ' ':
+                offset = 32
+            else:
+                offset = ord(char) - base
+            new_text += chr((offset + shift) % size + base) if (offset + shift) % size < 32 else ' '
+        elif 'а' <= char <= 'я' or char == ' ':
+            # Кирилиця (малі літери + пробіл)
+            base = ord('а')
+            size = 32 + 1
+            if char == ' ':
+                offset = 32
+            else:
+                offset = ord(char) - base
+            new_text += chr((offset + shift) % size + base) if (offset + shift) % size < 32 else ' '
         else:
+            # Символи, які не входять до алфавітів, залишаються незмінними
             new_text += char
 
-    logging.debug(f"Caesar Encoded Text: {new_text}")
+    return new_text
+
+def caesar_decipher(text, shift):
+    new_text = ""
+
+    for char in text:
+        if 'A' <= char <= 'Z' or char == ' ':
+            # Латиниця (великі літери + пробіл)
+            base = ord('A')
+            size = 26 + 1  # 26 літер + пробіл
+            if char == ' ':
+                offset = 26  # Пробіл йде після останньої літери
+            else:
+                offset = ord(char) - base
+            new_text += chr((offset - shift) % size + base) if (offset - shift) % size < 26 else ' '
+        elif 'a' <= char <= 'z' or char == ' ':
+            # Латиниця (малі літери + пробіл)
+            base = ord('a')
+            size = 26 + 1
+            if char == ' ':
+                offset = 26
+            else:
+                offset = ord(char) - base
+            new_text += chr((offset - shift) % size + base) if (offset - shift) % size < 26 else ' '
+        elif 'А' <= char <= 'Я' or char == ' ':
+            # Кирилиця (великі літери + пробіл)
+            base = ord('А')
+            size = 32 + 1  # 32 літери + пробіл
+            if char == ' ':
+                offset = 32
+            else:
+                offset = ord(char) - base
+            new_text += chr((offset - shift) % size + base) if (offset - shift) % size < 32 else ' '
+        elif 'а' <= char <= 'я' or char == ' ':
+            # Кирилиця (малі літери + пробіл)
+            base = ord('а')
+            size = 32 + 1
+            if char == ' ':
+                offset = 32
+            else:
+                offset = ord(char) - base
+            new_text += chr((offset - shift) % size + base) if (offset - shift) % size < 32 else ' '
+        else:
+            # Символи, які не входять до алфавітів, залишаються незмінними
+            new_text += char
+
     return new_text
 
 
-def caesar_decipher(text, shift):
-    logging.debug(f"Caesar Deciphering with Shift: {-shift}")
-    return caesar_cipher(text, -shift)
 
 
-# Vigenère Шифрование и расшифровка
 def vigenere_cipher(text, keyword):
     logging.debug(f"Vigenère: User's Text={text}, Keyword={keyword}")
     keyword = keyword.upper()
@@ -172,27 +229,17 @@ def vigenere_cipher(text, keyword):
             shift = ord(key_char) - ord('A')
             result += chr((ord(char) - ord('a') + shift) % 26 + ord('a'))
             keyword_index += 1
-        elif char == 'Ё':
-            shift = (ord(key_char) - ord('A')) % 32
-            result += chr((ord('Е') - ord('А') + shift) % 32 + ord('А'))
-            keyword_index += 1
-        elif char == 'ё':
-            shift = (ord(key_char) - ord('A')) % 32
-            result += chr((ord('е') - ord('а') + shift) % 32 + ord('а'))
-            keyword_index += 1
-        elif 'А' <= char <= 'Я':
-            shift = (ord(key_char) - ord('A')) % 32
-            result += chr((ord(char) - ord('А') + shift) % 32 + ord('А'))
-            keyword_index += 1
-        elif 'а' <= char <= 'я':
-            shift = (ord(key_char) - ord('A')) % 32
-            result += chr((ord(char) - ord('а') + shift) % 32 + ord('а'))
+        elif char == ' ':
+            # Шифруємо пробіл як символ із сіллю
+            shift = ord(key_char) - ord('A')
+            result += chr((ord('~') + shift) % 256)
             keyword_index += 1
         else:
             result += char
     
     logging.debug(f"Vigenère Encoded Text: {result}")
     return result
+
 
 def vigenere_decipher(text, keyword):
     logging.debug(f"Vigenère Deciphering with Keyword: {keyword}")
@@ -205,7 +252,10 @@ def vigenere_decipher(text, keyword):
             keyword_index = 0
         key_char = keyword[keyword_index]
         
-        if 'A' <= char <= 'Z':
+        if char == chr((ord('~') + (ord(key_char) - ord('A'))) % 256):
+            result += ' '
+            keyword_index += 1
+        elif 'A' <= char <= 'Z':
             shift = ord(key_char) - ord('A')
             result += chr((ord(char) - ord('A') - shift + 26) % 26 + ord('A'))
             keyword_index += 1
@@ -213,29 +263,13 @@ def vigenere_decipher(text, keyword):
             shift = ord(key_char) - ord('A')
             result += chr((ord(char) - ord('a') - shift + 26) % 26 + ord('a'))
             keyword_index += 1
-        elif char == 'Ё':
-            shift = (ord(key_char) - ord('A')) % 32
-            result += chr((ord('Е') - ord('А') - shift + 32) % 32 + ord('А'))
-            keyword_index += 1
-        elif char == 'ё':
-            shift = (ord(key_char) - ord('A')) % 32
-            result += chr((ord('е') - ord('а') - shift + 32) % 32 + ord('а'))
-            keyword_index += 1
-        elif 'А' <= char <= 'Я':
-            shift = (ord(key_char) - ord('A')) % 32
-            result += chr((ord(char) - ord('А') - shift + 32) % 32 + ord('А'))
-            keyword_index += 1
-        elif 'а' <= char <= 'я':
-            shift = (ord(key_char) - ord('A')) % 32
-            result += chr((ord(char) - ord('а') - shift + 32) % 32 + ord('а'))
-            keyword_index += 1
         else:
             result += char
     
     logging.debug(f"Vigenère Decoded Text: {result}")
     return result
 
-# Основний цикл 
+# Основний цикл
 while True:
     console.print(
         "[bold]Welcome to the Coder APP, enter values from 1-3 to see my results[/bold]"
