@@ -234,6 +234,14 @@ def vigenere_cipher(text, keyword):
             shift = ord(key_char) - ord('A')
             result += chr((ord('~') + shift) % 256)
             keyword_index += 1
+        elif 'А' <= char <= 'Я' or char == ' ':
+            shift = ord(key_char) - ord('А')
+            result += chr((ord(char) - ord('А') + shift) % 32 + ord('А'))
+            keyword_index += 1
+        elif 'а' <= char <= 'я' or char == ' ':
+            shift = ord(key_char) - ord('а')
+            result += chr((ord(char) - ord('а') + shift) % 32 + ord('а'))
+            keyword_index += 1
         else:
             result += char
     
@@ -262,6 +270,14 @@ def vigenere_decipher(text, keyword):
         elif 'a' <= char <= 'z':
             shift = ord(key_char) - ord('A')
             result += chr((ord(char) - ord('a') - shift + 26) % 26 + ord('a'))
+            keyword_index += 1
+        elif 'А' <= char <= 'Я' or char == ' ':
+            shift = ord(key_char) - ord('А')
+            result += chr((ord(char) - ord('А') - shift) % 32 + ord('А'))
+            keyword_index += 1
+        elif 'а' <= char <= 'я' or char == ' ':
+            shift = ord(key_char) - ord('а')
+            result += chr((ord(char) - ord('а') - shift) % 32 + ord('а'))
             keyword_index += 1
         else:
             result += char
