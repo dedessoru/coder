@@ -119,45 +119,29 @@ def caesar_cipher(text, shift):
     new_text = ""
 
     for char in text:
-        if 'A' <= char <= 'Z' or char == ' ':
-            # Латиниця (великі літери + пробіл)
+        if 'A' <= char <= 'Z':
             base = ord('A')
-            size = 26 + 1  # 26 літер + пробіл
-            if char == ' ':
-                offset = 26  # Пробіл йде після останньої літери
-            else:
-                offset = ord(char) - base
-            new_text += chr((offset + shift) % size + base) if (offset + shift) % size < 26 else ' '
-        elif 'a' <= char <= 'z' or char == ' ':
-            # Латиниця (малі літери + пробіл)
+            size = 26
+            offset = ord(char) - base
+            new_text += chr((offset + shift) % size + base)
+        elif 'a' <= char <= 'z':
             base = ord('a')
-            size = 26 + 1
-            if char == ' ':
-                offset = 26
-            else:
-                offset = ord(char) - base
-            new_text += chr((offset + shift) % size + base) if (offset + shift) % size < 26 else ' '
-        elif 'А' <= char <= 'Я' or char == ' ':
-            # Кирилиця (великі літери + пробіл)
+            size = 26
+            offset = ord(char) - base
+            new_text += chr((offset + shift) % size + base)
+        elif 'А' <= char <= 'Я':
             base = ord('А')
-            size = 32 + 1  # 32 літери + пробіл
-            if char == ' ':
-                offset = 32
-            else:
-                offset = ord(char) - base
-            new_text += chr((offset + shift) % size + base) if (offset + shift) % size < 32 else ' '
-        elif 'а' <= char <= 'я' or char == ' ':
-            # Кирилиця (малі літери + пробіл)
+            size = 32
+            offset = ord(char) - base
+            new_text += chr((offset + shift) % size + base)
+        elif 'а' <= char <= 'я':
             base = ord('а')
-            size = 32 + 1
-            if char == ' ':
-                offset = 32
-            else:
-                offset = ord(char) - base
-            new_text += chr((offset + shift) % size + base) if (offset + shift) % size < 32 else ' '
+            size = 32
+            offset = ord(char) - base
+            new_text += chr((offset + shift) % size + base)
         else:
-            # Символи, які не входять до алфавітів, залишаються незмінними
-            new_text += char
+            # Спеціальні символи (включаючи пробіли) шифруються через їх порядковий номер
+            new_text += chr((ord(char) + shift) % 256)  # Шифруємо в межах 256 символів ASCII
 
     return new_text
 
@@ -165,45 +149,29 @@ def caesar_decipher(text, shift):
     new_text = ""
 
     for char in text:
-        if 'A' <= char <= 'Z' or char == ' ':
-            # Латиниця (великі літери + пробіл)
+        if 'A' <= char <= 'Z':
             base = ord('A')
-            size = 26 + 1  # 26 літер + пробіл
-            if char == ' ':
-                offset = 26  # Пробіл йде після останньої літери
-            else:
-                offset = ord(char) - base
-            new_text += chr((offset - shift) % size + base) if (offset - shift) % size < 26 else ' '
-        elif 'a' <= char <= 'z' or char == ' ':
-            # Латиниця (малі літери + пробіл)
+            size = 26
+            offset = ord(char) - base
+            new_text += chr((offset - shift) % size + base)
+        elif 'a' <= char <= 'z':
             base = ord('a')
-            size = 26 + 1
-            if char == ' ':
-                offset = 26
-            else:
-                offset = ord(char) - base
-            new_text += chr((offset - shift) % size + base) if (offset - shift) % size < 26 else ' '
-        elif 'А' <= char <= 'Я' or char == ' ':
-            # Кирилиця (великі літери + пробіл)
+            size = 26
+            offset = ord(char) - base
+            new_text += chr((offset - shift) % size + base)
+        elif 'А' <= char <= 'Я':
             base = ord('А')
-            size = 32 + 1  # 32 літери + пробіл
-            if char == ' ':
-                offset = 32
-            else:
-                offset = ord(char) - base
-            new_text += chr((offset - shift) % size + base) if (offset - shift) % size < 32 else ' '
-        elif 'а' <= char <= 'я' or char == ' ':
-            # Кирилиця (малі літери + пробіл)
+            size = 32
+            offset = ord(char) - base
+            new_text += chr((offset - shift) % size + base)
+        elif 'а' <= char <= 'я':
             base = ord('а')
-            size = 32 + 1
-            if char == ' ':
-                offset = 32
-            else:
-                offset = ord(char) - base
-            new_text += chr((offset - shift) % size + base) if (offset - shift) % size < 32 else ' '
+            size = 32
+            offset = ord(char) - base
+            new_text += chr((offset - shift) % size + base)
         else:
-            # Символи, які не входять до алфавітів, залишаються незмінними
-            new_text += char
+            # Спеціальні символи (включаючи пробіли) дешифруються через їх порядковий номер
+            new_text += chr((ord(char) - shift) % 256)  # Дешифруємо в межах 256 символів ASCII
 
     return new_text
 
@@ -211,79 +179,80 @@ def caesar_decipher(text, shift):
 
 
 def vigenere_cipher(text, keyword):
-    logging.debug(f"Vigenère: User's Text={text}, Keyword={keyword}")
+    """
+    Encrypts the given text using the Vigenère cipher with the given keyword.
+    Spaces are encrypted as special symbols based on the keyword shift.
+    """
     keyword = keyword.upper()
-    result = ""
+    result = []
     keyword_index = 0
     
     for char in text:
         if keyword_index >= len(keyword):
             keyword_index = 0
         key_char = keyword[keyword_index]
+        shift = ord(key_char) - ord('A')
         
         if 'A' <= char <= 'Z':
-            shift = ord(key_char) - ord('A')
-            result += chr((ord(char) - ord('A') + shift) % 26 + ord('A'))
+            result.append(chr((ord(char) - ord('A') + shift) % 26 + ord('A')))
             keyword_index += 1
         elif 'a' <= char <= 'z':
-            shift = ord(key_char) - ord('A')
-            result += chr((ord(char) - ord('a') + shift) % 26 + ord('a'))
+            result.append(chr((ord(char) - ord('a') + shift) % 26 + ord('a')))
+            keyword_index += 1
+        elif 'А' <= char <= 'Я':
+            result.append(chr((ord(char) - ord('А') + shift) % 32 + ord('А')))
+            keyword_index += 1
+        elif 'а' <= char <= 'я':
+            result.append(chr((ord(char) - ord('а') + shift) % 32 + ord('а')))
             keyword_index += 1
         elif char == ' ':
-            # Шифруємо пробіл як символ із сіллю
-            shift = ord(key_char) - ord('A')
-            result += chr((ord('~') + shift) % 256)
-            keyword_index += 1
-        elif 'А' <= char <= 'Я' or char == ' ':
-            shift = ord(key_char) - ord('А')
-            result += chr((ord(char) - ord('А') + shift) % 32 + ord('А'))
-            keyword_index += 1
-        elif 'а' <= char <= 'я' or char == ' ':
-            shift = ord(key_char) - ord('а')
-            result += chr((ord(char) - ord('а') + shift) % 32 + ord('а'))
+            # Encrypt space as a unique symbol based on the shift
+            result.append(chr((ord(' ') + shift) % 256))
             keyword_index += 1
         else:
-            result += char
+            # Preserve other characters as is
+            result.append(char)
     
-    logging.debug(f"Vigenère Encoded Text: {result}")
-    return result
+    return ''.join(result)
 
 
 def vigenere_decipher(text, keyword):
-    logging.debug(f"Vigenère Deciphering with Keyword: {keyword}")
+    """
+    Decrypts the given text encrypted using the Vigenère cipher with the given keyword.
+    Spaces are decrypted based on the keyword shift.
+    """
     keyword = keyword.upper()
-    result = ""
+    result = []
     keyword_index = 0
     
     for char in text:
         if keyword_index >= len(keyword):
             keyword_index = 0
         key_char = keyword[keyword_index]
+        shift = ord(key_char) - ord('A')
         
-        if char == chr((ord('~') + (ord(key_char) - ord('A'))) % 256):
-            result += ' '
-            keyword_index += 1
-        elif 'A' <= char <= 'Z':
-            shift = ord(key_char) - ord('A')
-            result += chr((ord(char) - ord('A') - shift + 26) % 26 + ord('A'))
+        if 'A' <= char <= 'Z':
+            result.append(chr((ord(char) - ord('A') - shift + 26) % 26 + ord('A')))
             keyword_index += 1
         elif 'a' <= char <= 'z':
-            shift = ord(key_char) - ord('A')
-            result += chr((ord(char) - ord('a') - shift + 26) % 26 + ord('a'))
+            result.append(chr((ord(char) - ord('a') - shift + 26) % 26 + ord('a')))
             keyword_index += 1
-        elif 'А' <= char <= 'Я' or char == ' ':
-            shift = ord(key_char) - ord('А')
-            result += chr((ord(char) - ord('А') - shift) % 32 + ord('А'))
+        elif 'А' <= char <= 'Я':
+            result.append(chr((ord(char) - ord('А') - shift + 32) % 32 + ord('А')))
             keyword_index += 1
-        elif 'а' <= char <= 'я' or char == ' ':
-            shift = ord(key_char) - ord('а')
-            result += chr((ord(char) - ord('а') - shift) % 32 + ord('а'))
+        elif 'а' <= char <= 'я':
+            result.append(chr((ord(char) - ord('а') - shift + 32) % 32 + ord('а')))
+            keyword_index += 1
+        elif chr((ord(' ') + shift) % 256) == char:
+            # Decrypt special symbol back to space
+            result.append(' ')
             keyword_index += 1
         else:
-            result += char
+            # Preserve other characters as is
+            result.append(char)
     
-    logging.debug(f"Vigenère Decoded Text: {result}")
-    return result
+    return ''.join(result)
+
 
 # Основний цикл
 while True:
