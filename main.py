@@ -1,3 +1,18 @@
+"""
+  ___ ___   __| | ___ _ __ 
+ / __/ _ \ / _` |/ _ \ '__|
+| (_| (_) | (_| |  __/ |   
+ \___\___/ \__,_|\___|_|   
+                           
+Universal encryption/decryption application.
+
+This module provides various encryption methods including XOR, Caesar, and Vigenère ciphers.
+It supports both encryption and decryption of text with file input/output capabilities.
+
+--- dedessoru<3
+"""
+
+
 import json
 import logging
 import pyfiglet
@@ -7,8 +22,15 @@ import sys
 import string
 
 
-# Функція для завантаження конфігурації з файлу JSON
 def load_config():
+    """Load configuration from JSON file.
+
+    Returns:
+        dict: Configuration data loaded from config.json
+
+    Raises:
+        SystemExit: If config.json is not found
+    """
     try:
         with open('config.json', 'r') as file:
             return json.load(file)
@@ -41,8 +63,19 @@ print(logo)
 console = Console()
 console.print("Welcome to the coder universal app ")
 
-# Функція безпечного запиту параметра
-def asking_parametr(text, errtext, minval=float('-inf'),  maxval=float('inf')):
+
+def asking_parametr(text: str, errtext: str, minval: float = float("-inf"), maxval: float = float("inf")) -> int:
+    """Safely request and validate numeric input from user.
+
+    Args:
+        text: Prompt text to display to user
+        error_text: Error message to display on invalid input
+        min_val: Minimum allowed value
+        max_val: Maximum allowed value
+
+    Returns:
+        int: Valid user input within specified range
+    """
     while True:
         try:
             choice = int(console.input(text))
@@ -54,32 +87,138 @@ def asking_parametr(text, errtext, minval=float('-inf'),  maxval=float('inf')):
             logging.fatal(f"{errtext}")
             console.print(errtext)
 
-# Функція для читання тексту з файлу
-def read_text_from_file():
-    input_file = input("Enter the path to the file containing the text for encryption/decryption: ")
+
+def list_directory_files(directory: str = ".") -> list[str]:
+    """List all files in the specified directory.
+
+    Args:
+        directory: Path to directory, defaults to current directory
+
+    Returns:
+        list[str]: List of filenames in directory
+    """
     try:
-        with open(input_file, 'r') as file:
-            return file.read()
-    except FileNotFoundError:
-        logging.fatal(f"The file '{input_file}' was not found.")
-        console.print(f"The file '{input_file}' was not found.", style="bold red")
+        # Отримуємо список всіх файлів в каталозі
+        files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
+        return sorted(files)
+    except OSError as e:
+        logging.error(f"Error accessing directory: {e}")
+        return []
+
+
+def read_text_from_file() -> str | None:
+    """Read text from a file specified by user.
+
+    Displays available files in current directory and allows user to select one.
+
+    Returns:
+        Optional[str]: File contents if successful, None if file not found
+    """
+    # Отримуємо список файлів
+    files = list_directory_files()
+    
+    if not files:
+        console.print("No files found in current directory!", style="bold red")
         return None
 
-# Функція для запису тексту у файл
-def write_text_to_file(data):
-    output_file = input("Enter the path to the file for saving the result: ")
-    if os.path.exists(output_file):
-        overwrite = input(f"The file '{output_file}' already exists. Overwrite it? (y/n): ").lower()
-        if overwrite != 'y':
-            console.print("Writing canceled by the user.", style="bold yellow")
-            return
+    # Виводимо список файлів
+    console.print("\nAvailable files:", style="bold blue")
+    for idx, filename in enumerate(files, 1):
+        console.print(f"{idx}. {filename}")
 
-    with open(output_file, 'w') as file:
-        file.write(data)
-    console.print(f"The result has been successfully saved to the file '{output_file}'.", style="bold green")
+    while True:
+        try:
+            # Просимо користувача вибрати файл
+            choice = console.input("\nEnter file number or filename (or 'q' to quit): ")
+            
+            if choice.lower() == 'q':
+                return None
 
-# Функція шифрування XOR
+            # Спробуємо отримати файл за номером
+            if choice.isdigit():
+                index = int(choice) - 1
+                if 0 <= index < len(files):
+                    filename = files[index]
+                else:
+                    console.print("Invalid file number!", style="bold red")
+                    continue
+            else:
+                filename = choice
+
+            # Спробуємо відкрити файл
+            try:
+                with open(filename, 'r', encoding='utf-8') as file:
+                    content = file.read()
+                    console.print(f"\nSelected file: {filename}", style="bold green")
+                    return content
+            except FileNotFoundError:
+                console.print(f"File '{filename}' not found!", style="bold red")
+            except Exception as e:
+                logging.error(f"Error reading file: {e}")
+                console.print(f"Error reading file: {e}", style="bold red")
+
+        except ValueError:
+            console.print("Invalid input!", style="bold red")
+
+def write_text_to_file(data: str) -> None:
+    """Write text to a file specified by user.
+
+    Displays available files in current directory and allows user to specify
+    output file.
+
+    Args:
+        data: Text to write to file
+    """
+    # Показуємо існуючі файли
+    files = list_directory_files()
+    
+    if files:
+        console.print("\nExisting files:", style="bold blue")
+        for idx, filename in enumerate(files, 1):
+            console.print(f"{idx}. {filename}")
+
+    while True:
+        output_file = console.input("\nEnter filename or number to save: ")
+        
+        # Перевіряємо, чи введено номер файлу
+        if output_file.isdigit():
+            index = int(output_file) - 1
+            if 0 <= index < len(files):
+                output_file = files[index]
+            else:
+                console.print("Invalid file number!", style="bold red")
+                continue
+        
+        if os.path.exists(output_file):
+            overwrite = console.input(
+                f"File '{output_file}' already exists. Overwrite? (y/n): "
+            ).lower()
+            if overwrite != "y":
+                console.print("Writing canceled.", style="bold yellow")
+                return
+
+        try:
+            with open(output_file, "w", encoding="utf-8") as file:
+                file.write(data)
+            console.print(
+                f"Result saved to '{output_file}'.", 
+                style="bold green"
+            )
+            break
+        except Exception as e:
+            logging.error(f"Error writing to file: {e}")
+            console.print(f"Error writing to file: {e}", style="bold red")
+
 def xor_encrypt_to_binary(text, key):
+    """XOR encryption to binary string.
+
+    Args:
+        text: Input text to encrypt
+        key: Encryption key
+
+    Returns:
+        str: Encrypted binary string
+    """
     logging.debug(f"XOR: User's Text={text}, Key={key}")
     encrypted_text = ""
     text_bytes = text.encode('utf-8')
@@ -93,6 +232,15 @@ def xor_encrypt_to_binary(text, key):
     return encrypted_text
 
 def xor_decrypt_from_binary(binary_string, key):
+    """XOR decryption from binary string.
+
+    Args:
+        binary_string: Encrypted binary string
+        key: Decryption key
+
+    Returns:
+        str: Decrypted text
+    """
     logging.debug(f"XOR Encrypted Binary: Text={binary_string}, Key={key}")
     key_bytes = key.encode('utf-8')
     decrypted_bytes = bytearray()
@@ -116,6 +264,15 @@ def xor_decrypt_from_binary(binary_string, key):
         return None
 
 def caesar_cipher(text, shift):
+    """Caesar cipher encryption.
+
+    Args:
+        text: Input text to encrypt
+        shift: Encryption shift value
+
+    Returns:
+        str: Encrypted text
+    """
     new_text = ""
 
     for char in text:
@@ -146,6 +303,15 @@ def caesar_cipher(text, shift):
     return new_text
 
 def caesar_decipher(text, shift):
+    """Caesar cipher decryption.
+
+    Args:
+        text: Encrypted text
+        shift: Decryption shift value
+
+    Returns:
+        str: Decrypted text
+    """
     new_text = ""
 
     for char in text:
@@ -179,9 +345,14 @@ def caesar_decipher(text, shift):
 
 
 def vigenere_cipher(text, keyword):
-    """
-    Encrypts the given text using the Vigenère cipher with the given keyword.
-    Spaces are encrypted as special symbols based on the keyword shift.
+    """Vigenère cipher encryption.
+
+    Args:
+        text: Input text to encrypt
+        keyword: Encryption keyword
+
+    Returns:
+        str: Encrypted text
     """
     keyword = keyword.upper()
     result = []
@@ -217,9 +388,14 @@ def vigenere_cipher(text, keyword):
 
 
 def vigenere_decipher(text, keyword):
-    """
-    Decrypts the given text encrypted using the Vigenère cipher with the given keyword.
-    Spaces are decrypted based on the keyword shift.
+    """Vigenère cipher decryption.  
+
+    Args:
+        text: Encrypted text
+        keyword: Decryption keyword
+
+    Returns:
+        str: Decrypted text
     """
     keyword = keyword.upper()
     result = []
@@ -254,7 +430,7 @@ def vigenere_decipher(text, keyword):
     return ''.join(result)
 
 
-# Основний цикл
+"""Main program loop for encryption/decryption operations."""
 while True:
     console.print(
         "[bold]Welcome to the Coder APP, enter values from 1-3 to see my results[/bold]"
