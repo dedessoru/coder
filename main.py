@@ -263,8 +263,8 @@ def xor_decrypt_from_binary(binary_string, key):
         logging.error(f"XOR decryption error: {str(e)}")
         return None
 
-def caesar_cipher(text, shift):
-    """Caesar cipher encryption.
+def caesar_cipher(text: str, shift: int) -> str:
+    """Caesar cipher encryption for all characters.
 
     Args:
         text: Input text to encrypt
@@ -273,37 +273,17 @@ def caesar_cipher(text, shift):
     Returns:
         str: Encrypted text
     """
-    new_text = ""
+    encrypted_text = ""
 
     for char in text:
-        if 'A' <= char <= 'Z':
-            base = ord('A')
-            size = 26
-            offset = ord(char) - base
-            new_text += chr((offset + shift) % size + base)
-        elif 'a' <= char <= 'z':
-            base = ord('a')
-            size = 26
-            offset = ord(char) - base
-            new_text += chr((offset + shift) % size + base)
-        elif 'А' <= char <= 'Я':
-            base = ord('А')
-            size = 32
-            offset = ord(char) - base
-            new_text += chr((offset + shift) % size + base)
-        elif 'а' <= char <= 'я':
-            base = ord('а')
-            size = 32
-            offset = ord(char) - base
-            new_text += chr((offset + shift) % size + base)
-        else:
-            # Спеціальні символи (включаючи пробіли) шифруються через їх порядковий номер
-            new_text += chr((ord(char) + shift) % 256)  # Шифруємо в межах 256 символів ASCII
+        new_char_code = (ord(char) + shift) % 256
+        encrypted_text += chr(new_char_code)
 
-    return new_text
+    return encrypted_text
 
-def caesar_decipher(text, shift):
-    """Caesar cipher decryption.
+
+def caesar_decipher(text: str, shift: int) -> str:
+    """Caesar cipher decryption for all characters.
 
     Args:
         text: Encrypted text
@@ -312,39 +292,19 @@ def caesar_decipher(text, shift):
     Returns:
         str: Decrypted text
     """
-    new_text = ""
+    decrypted_text = ""
 
     for char in text:
-        if 'A' <= char <= 'Z':
-            base = ord('A')
-            size = 26
-            offset = ord(char) - base
-            new_text += chr((offset - shift) % size + base)
-        elif 'a' <= char <= 'z':
-            base = ord('a')
-            size = 26
-            offset = ord(char) - base
-            new_text += chr((offset - shift) % size + base)
-        elif 'А' <= char <= 'Я':
-            base = ord('А')
-            size = 32
-            offset = ord(char) - base
-            new_text += chr((offset - shift) % size + base)
-        elif 'а' <= char <= 'я':
-            base = ord('а')
-            size = 32
-            offset = ord(char) - base
-            new_text += chr((offset - shift) % size + base)
-        else:
-            # Спеціальні символи (включаючи пробіли) дешифруються через їх порядковий номер
-            new_text += chr((ord(char) - shift) % 256)  # Дешифруємо в межах 256 символів ASCII
+        new_char_code = (ord(char) - shift) % 256
+        decrypted_text += chr(new_char_code)
 
-    return new_text
+    return decrypted_text
 
 
 
 
-def vigenere_cipher(text, keyword):
+
+def vigenere_cipher(text: str, keyword: str) -> str:
     """Vigenère cipher encryption.
 
     Args:
@@ -354,6 +314,7 @@ def vigenere_cipher(text, keyword):
     Returns:
         str: Encrypted text
     """
+    logging.debug(f"Vigenère: User's Text={text}, Keyword={keyword}")
     keyword = keyword.upper()
     result = []
     keyword_index = 0
@@ -370,25 +331,20 @@ def vigenere_cipher(text, keyword):
         elif 'a' <= char <= 'z':
             result.append(chr((ord(char) - ord('a') + shift) % 26 + ord('a')))
             keyword_index += 1
-        elif 'А' <= char <= 'Я':
-            result.append(chr((ord(char) - ord('А') + shift) % 32 + ord('А')))
-            keyword_index += 1
-        elif 'а' <= char <= 'я':
-            result.append(chr((ord(char) - ord('а') + shift) % 32 + ord('а')))
-            keyword_index += 1
-        elif char == ' ':
-            # Encrypt space as a unique symbol based on the shift
-            result.append(chr((ord(' ') + shift) % 256))
+        elif '0' <= char <= '9':
+            result.append(chr((ord(char) - ord('0') + shift) % 10 + ord('0')))
             keyword_index += 1
         else:
             # Preserve other characters as is
             result.append(char)
     
-    return ''.join(result)
+    encrypted_text = ''.join(result)
+    logging.debug(f"Vigenère Encoded Text: {encrypted_text}")
+    return encrypted_text
 
 
-def vigenere_decipher(text, keyword):
-    """Vigenère cipher decryption.  
+def vigenere_decipher(text: str, keyword: str) -> str:
+    """Vigenère cipher decryption.
 
     Args:
         text: Encrypted text
@@ -397,6 +353,7 @@ def vigenere_decipher(text, keyword):
     Returns:
         str: Decrypted text
     """
+    logging.debug(f"Vigenère Deciphering with Keyword: {keyword}")
     keyword = keyword.upper()
     result = []
     keyword_index = 0
@@ -413,21 +370,15 @@ def vigenere_decipher(text, keyword):
         elif 'a' <= char <= 'z':
             result.append(chr((ord(char) - ord('a') - shift + 26) % 26 + ord('a')))
             keyword_index += 1
-        elif 'А' <= char <= 'Я':
-            result.append(chr((ord(char) - ord('А') - shift + 32) % 32 + ord('А')))
-            keyword_index += 1
-        elif 'а' <= char <= 'я':
-            result.append(chr((ord(char) - ord('а') - shift + 32) % 32 + ord('а')))
-            keyword_index += 1
-        elif chr((ord(' ') + shift) % 256) == char:
-            # Decrypt special symbol back to space
-            result.append(' ')
+        elif '0' <= char <= '9':
+            result.append(chr((ord(char) - ord('0') - shift + 10) % 10 + ord('0')))
             keyword_index += 1
         else:
-            # Preserve other characters as is
             result.append(char)
     
-    return ''.join(result)
+    decrypted_text = ''.join(result)
+    logging.debug(f"Vigenère Decoded Text: {decrypted_text}")
+    return decrypted_text
 
 
 """Main program loop for encryption/decryption operations."""
