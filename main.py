@@ -114,7 +114,6 @@ def read_text_from_file() -> str | None:
     Returns:
         Optional[str]: File contents if successful, None if file not found
     """
-    # Отримуємо список файлів
     files = list_directory_files()
     
     if not files:
@@ -209,59 +208,108 @@ def write_text_to_file(data: str) -> None:
             logging.error(f"Error writing to file: {e}")
             console.print(f"Error writing to file: {e}", style="bold red")
 
-def xor_encrypt_to_binary(text, key):
-    """XOR encryption to binary string.
-
-    Args:
-        text: Input text to encrypt
-        key: Encryption key
-
-    Returns:
-        str: Encrypted binary string
-    """
+def xor_encrypt_to_binary(text: str, key: str) -> bytes:
+    """XOR encryption to binary data."""
     logging.debug(f"XOR: User's Text={text}, Key={key}")
-    encrypted_text = ""
     text_bytes = text.encode('utf-8')
     key_bytes = key.encode('utf-8')
+    encrypted_bytes = bytearray()
     
     for i in range(len(text_bytes)):
         encrypted_byte = text_bytes[i] ^ key_bytes[i % len(key_bytes)]
-        encrypted_text += format(encrypted_byte, '08b')
+        encrypted_bytes.append(encrypted_byte)
     
-    logging.debug(f"XOR Encrypted Text={encrypted_text}")
-    return encrypted_text
+    logging.debug(f"XOR Encrypted Binary Data: {encrypted_bytes}")
+    return bytes(encrypted_bytes)
 
-def xor_decrypt_from_binary(binary_string, key):
-    """XOR decryption from binary string.
-
-    Args:
-        binary_string: Encrypted binary string
-        key: Decryption key
-
-    Returns:
-        str: Decrypted text
-    """
-    logging.debug(f"XOR Encrypted Binary: Text={binary_string}, Key={key}")
+def xor_decrypt_from_binary(data: bytes, key: str) -> str:
+    """XOR decryption from binary data."""
+    logging.debug(f"XOR: Decrypting binary data with key={key}")
     key_bytes = key.encode('utf-8')
     decrypted_bytes = bytearray()
     
-    # Перевіряємо, що вхідний текст містить лише 0 та 1
-    binary_string = ''.join(c for c in binary_string if c in '01')
+    for i in range(len(data)):
+        decrypted_byte = data[i] ^ key_bytes[i % len(key_bytes)]
+        decrypted_bytes.append(decrypted_byte)
     
-    try:
-        for i in range(0, len(binary_string), 8):
-            byte_str = binary_string[i:i+8]
-            if len(byte_str) == 8:  # Перевіряємо повний байт
-                encrypted_byte = int(byte_str, 2)
-                decrypted_byte = encrypted_byte ^ key_bytes[i // 8 % len(key_bytes)]
-                decrypted_bytes.append(decrypted_byte)
+    decrypted_text = decrypted_bytes.decode('utf-8')
+    logging.debug(f"XOR Decrypted Text: {decrypted_text}")
+    return decrypted_text
+
+def write_binary_to_file(data: bytes) -> None:
+    """Write binary data to a file specified by user."""
+    files = list_directory_files()
+    
+    if files:
+        console.print("\nExisting files:", style="bold blue")
+        for idx, filename in enumerate(files, 1):
+            console.print(f"{idx}. {filename}")
+
+    while True:
+        output_file = console.input("\nEnter filename or number to save: ")
         
-        decrypted_text = decrypted_bytes.decode('utf-8')
-        logging.debug(f"XOR Decrypted Text: {decrypted_text}")
-        return decrypted_text
-    except Exception as e:
-        logging.error(f"XOR decryption error: {str(e)}")
-        return None
+        if output_file.isdigit():
+            index = int(output_file) - 1
+            if 0 <= index < len(files):
+                output_file = files[index]
+            else:
+                console.print("Invalid file number!", style="bold red")
+                continue
+        
+        if os.path.exists(output_file):
+            overwrite = console.input(
+                f"File '{output_file}' already exists. Overwrite? (y/n): "
+            ).lower()
+            if overwrite != "y":
+                console.print("Writing canceled.", style="bold yellow")
+                return
+
+        try:
+            with open(output_file, "wb") as file:
+                file.write(data)
+            console.print(
+                f"Result saved to '{output_file}'.", 
+                style="bold green"
+            )
+            break
+        except Exception as e:
+            logging.error(f"Error writing to file: {e}")
+            console.print(f"Error writing to file: {e}", style="bold red")
+
+def read_binary_from_file() -> bytes:
+    """Read binary data from a file specified by user."""
+    files = list_directory_files()
+    
+    if files:
+        console.print("\nAvailable files:", style="bold blue")
+        for idx, filename in enumerate(files, 1):
+            console.print(f"{idx}. {filename}")
+
+    while True:
+        input_file = console.input("\nEnter filename or number to read: ")
+        
+        if input_file.isdigit():
+            index = int(input_file) - 1
+            if 0 <= index < len(files):
+                input_file = files[index]
+            else:
+                console.print("Invalid file number!", style="bold red")
+                continue
+
+        try:
+            with open(input_file, "rb") as file:
+                data = file.read()
+            console.print(
+                f"Data read from '{input_file}'.", 
+                style="bold green"
+            )
+            return data
+        except FileNotFoundError:
+            console.print(f"File '{input_file}' not found!", style="bold red")
+        except Exception as e:
+            logging.error(f"Error reading file: {e}")
+            console.print(f"Error reading file: {e}", style="bold red")
+
 
 def caesar_cipher(text: str, shift: int) -> str:
     """Caesar cipher encryption for all characters.
@@ -402,7 +450,7 @@ while True:
             key = input("Enter the secret key (do not share it): ")
             if enordecrypt == 1:
                 encrypted_text = xor_encrypt_to_binary(text, key)
-                write_text_to_file(encrypted_text)
+                write_binary_to_file(encrypted_text)
             elif enordecrypt == 2:
                 decrypted_text = xor_decrypt_from_binary(encrypted_text,key)
                 write_text_to_file(decrypted_text)
