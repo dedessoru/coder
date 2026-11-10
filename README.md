@@ -1,34 +1,34 @@
 # Coder
 
-> Небольшое консольное приложение для демонстрации классических методов шифрования.
+> A lightweight command-line application for exploring classic encryption methods.
 
 ![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?logo=python&logoColor=white)
 ![Project](https://img.shields.io/badge/project-educational-lightgrey)
 
-## Возможности
+## Features
 
-- **XOR** — шифрование текста в двоичное представление с помощью ключа.
-- **Шифр Цезаря** — сдвиг символов на заданное количество позиций.
-- **Шифр Виженера** — шифрование с использованием буквенного ключа.
-- Поддержка латиницы и кириллицы.
-- Чтение исходного текста и сохранение результата в файлы.
-- Цветной и удобный интерфейс благодаря `Rich`.
+- **XOR** — encrypt text as binary data with a secret key.
+- **Caesar cipher** — shift letters by a configurable number of positions.
+- **Vigenere cipher** — encrypt text using a repeating keyword.
+- Support for Latin and Cyrillic alphabets.
+- Read input from files and save encrypted or decrypted output.
+- A colored terminal interface powered by `Rich`.
 
-> Проект создан в учебных целях. Реализация не предназначена для защиты реальных
-> секретов или замены современных криптографических библиотек.
+> This project is intended for educational purposes. It is not suitable for
+> protecting real secrets or replacing modern cryptographic libraries.
 
-## Быстрый старт
+## Quick start
 
-### 1. Клонирование
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/dedessoru/coder.git
 cd coder
 ```
 
-### 2. Установка зависимостей
+### 2. Install dependencies
 
-Рекомендуется использовать виртуальное окружение:
+Using a virtual environment is recommended:
 
 ```bash
 python -m venv .venv
@@ -46,41 +46,41 @@ source .venv/bin/activate
 .venv\Scripts\activate
 ```
 
-Установите зависимости:
+Install the required packages:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Запуск
+### 3. Run the application
 
 ```bash
 python main.py
 ```
 
-## Как пользоваться
+## Usage
 
-1. Выберите алгоритм: XOR, Caesar или Vigenère.
-2. Укажите режим — шифрование или расшифровка.
-3. Введите путь к файлу с исходным текстом.
-4. Укажите ключ или сдвиг.
-5. Введите путь для сохранения результата.
+1. Choose an encryption method: XOR, Caesar, or Vigenere.
+2. Select encryption or decryption mode.
+3. Enter the path to the input text file.
+4. Provide a key or shift value.
+5. Enter the path where the result should be saved.
 
-Программа также поддерживает выход через пункт `4`.
+Choose option `4` to exit the application.
 
-## Структура проекта
+## Project structure
 
 ```text
 .
-├── config.json         # настройки логирования
-├── main.py             # основная логика приложения
-├── requirements.txt    # зависимости Python
-└── README.md           # документация
+├── config.json         # logging configuration
+├── main.py             # application logic
+├── requirements.txt    # Python dependencies
+└── README.md           # project documentation
 ```
 
-## Конфигурация
+## Configuration
 
-Настройки находятся в `config.json`:
+Logging settings are stored in `config.json`:
 
 ```json
 {
@@ -89,8 +89,8 @@ python main.py
 }
 ```
 
-Лог-файл создаётся автоматически при запуске и не хранится в репозитории.
+The log file is generated automatically at runtime and is not tracked in the repository.
 
-## Лицензия
+## License
 
-Проект распространяется в учебных целях.
+This project is distributed for educational purposes.

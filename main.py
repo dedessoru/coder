@@ -7,7 +7,7 @@ import sys
 import string
 
 
-# Функція для завантаження конфігурації з файлу JSON
+# Load configuration from the JSON file.
 def load_config():
     try:
         with open('config.json', 'r') as file:
@@ -18,7 +18,7 @@ def load_config():
 
 config = load_config()
 
-# Налаштування логування на основі файлу конфігурації
+# Configure logging from the loaded settings.
 log_file = config.get("log_file", "main.log")
 log_level = config.get("log_level", "DEBUG").upper()
 
@@ -29,19 +29,19 @@ logging.basicConfig(
     filemode='a'
 )
 
-# Логування старту програми
+# Log application startup.
 logging.info("-----------------------------------------")
 logging.info("------------------Start------------------")
 logging.info("-----------------------------------------")
 
-# Введення та виведення ASCII-логотипу
+# Display the ASCII logo.
 logo = pyfiglet.figlet_format("coder")
 print(logo)
 
 console = Console()
 console.print("Welcome to the coder universal app ")
 
-# Функція безпечного запиту параметра
+# Safely request a numeric parameter.
 def asking_parametr(text, errtext, minval=float('-inf'),  maxval=float('inf')):
     while True:
         try:
@@ -54,7 +54,7 @@ def asking_parametr(text, errtext, minval=float('-inf'),  maxval=float('inf')):
             logging.fatal(f"{errtext}")
             console.print(errtext)
 
-# Функція для читання тексту з файлу
+# Read text from a file.
 def read_text_from_file():
     input_file = input("Enter the path to the file containing the text for encryption/decryption: ")
     try:
@@ -65,7 +65,7 @@ def read_text_from_file():
         console.print(f"The file '{input_file}' was not found.", style="bold red")
         return None
 
-# Функція для запису тексту у файл
+# Write text to a file.
 def write_text_to_file(data):
     output_file = input("Enter the path to the file for saving the result: ")
     if os.path.exists(output_file):
@@ -78,7 +78,7 @@ def write_text_to_file(data):
         file.write(data)
     console.print(f"The result has been successfully saved to the file '{output_file}'.", style="bold green")
 
-# Функція шифрування XOR
+# XOR encryption.
 def xor_encrypt_to_binary(text, key):
     logging.debug(f"XOR: User's Text={text}, Key={key}")
     encrypted_text = ""
@@ -97,13 +97,13 @@ def xor_decrypt_from_binary(binary_string, key):
     key_bytes = key.encode('utf-8')
     decrypted_bytes = bytearray()
     
-    # Перевіряємо, що вхідний текст містить лише 0 та 1
+    # Keep only binary digits from the input.
     binary_string = ''.join(c for c in binary_string if c in '01')
     
     try:
         for i in range(0, len(binary_string), 8):
             byte_str = binary_string[i:i+8]
-            if len(byte_str) == 8:  # Перевіряємо повний байт
+            if len(byte_str) == 8:  # Process complete bytes only.
                 encrypted_byte = int(byte_str, 2)
                 decrypted_byte = encrypted_byte ^ key_bytes[i // 8 % len(key_bytes)]
                 decrypted_bytes.append(decrypted_byte)
@@ -140,8 +140,8 @@ def caesar_cipher(text, shift):
             offset = ord(char) - base
             new_text += chr((offset + shift) % size + base)
         else:
-            # Спеціальні символи (включаючи пробіли) шифруються через їх порядковий номер
-            new_text += chr((ord(char) + shift) % 256)  # Шифруємо в межах 256 символів ASCII
+            # Encode special characters, including spaces, by their code point.
+            new_text += chr((ord(char) + shift) % 256)  # Keep the result in the ASCII range.
 
     return new_text
 
@@ -170,8 +170,8 @@ def caesar_decipher(text, shift):
             offset = ord(char) - base
             new_text += chr((offset - shift) % size + base)
         else:
-            # Спеціальні символи (включаючи пробіли) дешифруються через їх порядковий номер
-            new_text += chr((ord(char) - shift) % 256)  # Дешифруємо в межах 256 символів ASCII
+            # Decode special characters, including spaces, by their code point.
+            new_text += chr((ord(char) - shift) % 256)  # Keep the result in the ASCII range.
 
     return new_text
 
@@ -254,7 +254,7 @@ def vigenere_decipher(text, keyword):
     return ''.join(result)
 
 
-# Основний цикл
+# Main application loop.
 while True:
     console.print(
         "[bold]Welcome to the Coder APP, enter values from 1-3 to see my results[/bold]"
@@ -325,7 +325,7 @@ while True:
         console.print("Stopping...")
         break
 
-# Логування завершення програми
+# Log application shutdown.
 logging.info("-----------------------------------------")
 logging.info("-------------------END-------------------")
 logging.info("-----------------------------------------")
